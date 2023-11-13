@@ -80,29 +80,28 @@ function ai_content_generator_page() {
         );
 
         // Send a chat-based completion request to OpenAI
-        $altered_title = chat_completion_with_openai($title_messages, $model, $api_key);
+        $title = chat_completion_with_openai($title_messages, $model, $api_key);
 
-        $altered_content = chat_completion_with_openai($content_messages, $model, $api_key);
+        $content = chat_completion_with_openai($content_messages, $model, $api_key);
 
-        if ($altered_title && $altered_content) {
+        if ($title && $content) {
             // Create a new post with the extracted title and content
             $new_post = array(
-                'post_title' => $altered_title,
-                'post_content' => $altered_content,
+                'post_title' => $title,
+                'post_content' => $content,
                 'post_status' => 'publish',
-                'post_category' => $selected_created_categories,
             );
 
             $new_post_id = wp_insert_post($new_post);
 
             if ($new_post_id) {
                 // Display a success message
-                echo '<p>Post translated and created: ' . esc_html($altered_title) . '</p>';
+                echo '<p>Post created: ' . esc_html($title) . '</p>';
             } else {
-                echo '<p>Error creating translated post for: ' . esc_html($post_title) . '</p>';
+                echo '<p>Error creating post for: ' . esc_html($title) . '</p>';
             }
         } else {
-            echo '<p>Error translating content for: ' . esc_html($post_title) . '</p>';
+            echo '<p>Error generating post</p>';
         }
     }
 
@@ -115,7 +114,7 @@ function ai_content_generator_page() {
     // Display the form
     ?>
 <div class="wrap">
-    <h2>Translate Posts</h2>
+    <h2>Generate Posts</h2>
     <form method="post" action="">
         <label for="model">Specify ChatGPT Model:</label>
         <input type="text" name="model" value="<?php echo esc_attr($model); ?>" required><br><br>
