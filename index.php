@@ -1,7 +1,7 @@
 <?php
 /*
-Plugin Name: Chat GPT Posts Generator
-Description: Plugin to generate WP posts using OpenAI API.
+Plugin Name: Chat GPT Pages Generator
+Description: Plugin to generate WP pages using OpenAI API.
 Version: 1.0
 Author: Sviat
 */
@@ -89,19 +89,20 @@ function ai_content_generator_page() {
             $new_post = array(
                 'post_title' => $title,
                 'post_content' => $content,
-                'post_status' => 'publish',
+                'post_status'  => 'draft', // Set the status to 'draft' for a new page
+                'post_type'    => 'page', // Set the post type to 'page' for a new page
             );
 
             $new_post_id = wp_insert_post($new_post);
 
             if ($new_post_id) {
                 // Display a success message
-                echo '<p>Post created: ' . esc_html($title) . '</p>';
+                echo '<p>Page created: ' . esc_html($title) . '</p>';
             } else {
-                echo '<p>Error creating post for: ' . esc_html($title) . '</p>';
+                echo '<p>Error creating page for: ' . esc_html($title) . '</p>';
             }
         } else {
-            echo '<p>Error generating post</p>';
+            echo '<p>Error generating page</p>';
         }
     }
 
@@ -114,7 +115,7 @@ function ai_content_generator_page() {
     // Display the form
     ?>
 <div class="wrap">
-    <h2>Generate Posts</h2>
+    <h2>Generate Page</h2>
     <form method="post" action="">
         <label for="model">Specify ChatGPT Model:</label>
         <input type="text" name="model" value="<?php echo esc_attr($model); ?>" required><br><br>
@@ -130,7 +131,7 @@ function ai_content_generator_page() {
         <textarea name="content_prompt" rows="5" cols="50"
             style="width: 500px; height: 100px;"><?php echo esc_textarea($content_prompt); ?></textarea><br><br>
 
-        <input type="submit" name="generate_post" class="button-primary" value="Generate Post">
+        <input type="submit" name="generate_post" class="button-primary" value="Generate Page">
     </form>
 </div>
 <?php
