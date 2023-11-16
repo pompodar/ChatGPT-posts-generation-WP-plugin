@@ -57,12 +57,14 @@ function ai_content_generator_page() {
         $api_key = sanitize_text_field($_POST['api_key']);
         $title_prompt = sanitize_text_field($_POST['title_prompt']);
         $content_prompt = sanitize_text_field($_POST['content_prompt']);
+        $meta_desc_prompt = sanitize_text_field($_POST['meta_desc_prompt']);
 
         // Save form values in options
         update_option('ai_content_generator_model', $model);
         update_option('ai_content_generator_api_key', $api_key);
         update_option('ai_content_generator_title_prompt', $title_prompt);
         update_option('ai_content_generator_content_prompt', $content_prompt);
+        update_option('ai_content_generator_meta_desc_prompt', $meta_desc_prompt);
 
         // Create chat messages using the provided prompts for title and content
         $title_messages = array(
@@ -79,16 +81,25 @@ function ai_content_generator_page() {
             ),
         );
 
+        $meta_desc_messages = array(
+            array(
+                'role' => 'user',
+                'content' => $meta_desc_prompt
+            ),
+        );
+
         // Send a chat-based completion request to OpenAI
         $title = chat_completion_with_openai($title_messages, $model, $api_key);
 
         $content = chat_completion_with_openai($content_messages, $model, $api_key);
 
+        $meta_desc = chat_completion_with_openai($meta_desc_messages, $model, $api_key);
+
         if ($title && $content) {
             // Create a new post with the extracted title and content
             $new_post = array(
                 'post_title' => $title,
-                'post_content' => $content,
+                'post_content' => wp_kses_post($content),
                 'post_status'  => 'draft', // Set the status to 'draft' for a new page
                 'post_type'    => 'page', // Set the post type to 'page' for a new page
             );
@@ -96,8 +107,20 @@ function ai_content_generator_page() {
             $new_post_id = wp_insert_post($new_post);
 
             if ($new_post_id) {
+                // Set the Yoast SEO meta description
+                update_post_meta($new_post_id, '_yoast_wpseo_metadesc', $meta_desc);
+
+                // Update post to sync from post meta to yoast indexable
+                $new_post = array(
+                    'ID' => $new_post_id
+                );
+
+                wp_update_post( $new_post );  
+                              
                 // Display a success message
-                echo '<p>Page created: ' . esc_html($title) . '</p>';
+                echo '<p>Page created with title: ' . esc_html($title) . '</p>';
+                echo '<hr>';
+                echo '<p>and content: ' . esc_html($content) . '</p>';
             } else {
                 echo '<p>Error creating page for: ' . esc_html($title) . '</p>';
             }
@@ -111,6 +134,7 @@ function ai_content_generator_page() {
     $api_key = get_option('ai_content_generator_api_key', '');
     $title_prompt = get_option('ai_content_generator_title_prompt', '');
     $content_prompt = get_option('ai_content_generator_content_prompt', '');
+    $meta_desc_prompt = get_option('ai_content_generator_meta_desc_prompt', '');
 
     // Display the form
     ?>
@@ -130,6 +154,10 @@ function ai_content_generator_page() {
         <label for="content_prompt">Content Prompt:</label>
         <textarea name="content_prompt" rows="5" cols="50"
             style="width: 500px; height: 100px;"><?php echo esc_textarea($content_prompt); ?></textarea><br><br>
+
+        <label for="content_prompt">Meta Description Prompt:</label>
+        <textarea name="meta_desc_prompt" rows="5" cols="50"
+            style="width: 500px; height: 100px;"><?php echo esc_textarea($meta_desc_prompt); ?></textarea><br><br>
 
         <input type="submit" name="generate_post" class="button-primary" value="Generate Page">
     </form>
